@@ -14,7 +14,18 @@ ApexNet trains five deep-learning architectures on real historical Formula 1 rac
 
 </div>
 
+## 👩‍🎓 Student Details
 
+| Field | Details |
+|---|---|
+| **Name** | Ria S |
+| **Registration Number** | 2430010326 |
+| **Branch** | Computer Science and Data Science |
+| **Batch** | D |
+| **Project Title** | ApexNet — F1 Overtaking Prediction |
+| **GitHub Username** | [ria0304](https://github.com/ria0304) |
+
+---
 
 ## Core Prediction Flow
 
@@ -70,11 +81,11 @@ Every architecture here gets an identical evaluation on the same held-out test s
 | GAT | 0.723 | 0.706 | 0.577 | 0.828 | 0.635 | 0.798 |
 | LSTM | 0.726 | **0.754** | 0.510 | **0.881** | 0.608 | 0.779 |
 | CNN+LSTM | 0.705 | 0.662 | 0.599 | 0.781 | 0.629 | 0.780 |
-| **CNN+GAT (proposed)** | 0.713 | 0.659 | **0.649** | 0.759 | **0.654** | 0.795 |
+| **CNN+GAT (proposed; best F1/recall, single seed)** | 0.713 | 0.659 | **0.649** | 0.759 | **0.654** | 0.795 |
 
 Held-out test set, 275 races → 159/53/53 train/val/test, seed=42, ~42–43% positive rate in every split (not imbalance-inflated).
 
-**Honest read:** LSTM is the most conservative model — best accuracy and precision, worst recall. CNN+GAT is the best F1/recall trade-off, not an outright winner on every metric. Which one is "correct" depends on whether missing a real overtake or raising a false alarm is costlier for the use case.
+**Honest read:** LSTM is the most conservative model — best accuracy and precision, worst recall. CNN+GAT is the best F1/recall trade-off, not an outright winner on every metric. With only 53 test races and a single seed, gaps of a point or two (e.g. 0.723 vs 0.713 accuracy) are likely within run-to-run noise, so treat the ranking as indicative rather than conclusive. Which model is "correct" depends on whether missing a real overtake or raising a false alarm is costlier for the use case.
 
 <p align="center"><img src="figures/confusion_matrix_cnn_gat_test.png" width="380" alt="CNN+GAT confusion matrix" /></p>
 
@@ -122,7 +133,7 @@ CNN and LSTM branches concatenated before readout. Tests whether stacking two te
 
 ### Module 5 — CNN+GAT (proposed)
 
-Temporal CNN branch + GAT branch over the grid-adjacency graph, concatenated per driver, read out per pair. Best F1/recall of the five. Full architecture description: `models/model_description.txt`.
+Temporal CNN branch + GAT branch over the grid-adjacency graph, concatenated per driver, read out per pair. Best F1/recall of the five on this single-seed run. Full architecture description: `models/model_description.txt`.
 
 ### Training + checking what's trained
 
