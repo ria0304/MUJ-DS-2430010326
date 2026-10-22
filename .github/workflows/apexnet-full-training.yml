@@ -1,0 +1,86 @@
+
+name: ApexNet Full Training and Save Results
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  train:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Verify dataset
+        run: |
+          set -e
+          for f in races.csv race_results.csv drivers.csv \
+                   constructors.csv circuits.csv \
+                   qualifying_results.csv pit_stops.csv; do
+            test -s "data/$f" || {
+              echo "Missing data/$f"
+              exit 1
+            }
+          done
+          echo "All required dataset files exist."
+
+      - name: Train and evaluate all models
+        run: |
+          set -o pipefail
+          mkdir -p logs
+          python -u backend/train.py 2>&1 | tee logs/github_training.log
+
+      - name: Check generated outputs
+        if: always()
+        run: |
+          echo "Generated files:"
+          git status --short
+          find results checkpoints figures logs \
+            -maxdepth 2 -type f -print 2>/dev/null || true
+
+      - name: Commit results to repository
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email \
+            "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add -f results/ checkpoints/ figures/ logs/
+
+          if git diff --cached --quiet; then
+            echo "No output files to commit."
+            exit 0
+          fi
+
+          git commit -m "Save ApexNet training outputs [skip ci]"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+
+      - name: Save downloadable backup
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: apexnet-results-${{ github.run_number }}
+          path: |
+            results/
+            checkpoints/
+            figures/
+            logs/
+          if-no-files-found: warn
+          retention-days: 30
