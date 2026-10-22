@@ -60,17 +60,6 @@ Live dashboard replay against the real historical race
 
 ---
 
-## ⚠️ A Note on Repository State
-
-This README, and everything below it, describes the pipeline that actually produced the committed artifacts in `results/` and `checkpoints/` — five architectures, one training run each (seed=42). That's what you'll reproduce if you run `backend/train.py` from this snapshot.
-
-Two things worth knowing if you're browsing the code directly rather than just reading this file:
-
-- **The backend has moved ahead of these numbers.** `backend/config.py` now defines `SEEDS = [42, 43, 44]`, and `backend/train.py` / `backend/model.py` support eight architectures — the five below plus a `cnn_gat_v2` "gated-fusion" variant, a Transformer baseline, and a GCN baseline — along with two classical scikit-learn baselines (logistic regression, gradient boosting) for a sanity check. `models/model_description.txt` documents that newer pipeline in detail. None of that has been re-run to completion, so its results aren't reflected here. If you pull the latest code and run `train.py`, expect a longer run and a `results/metrics.json` with a different shape than the tables below — re-run it and refresh this README before trusting the newer numbers.
-- **`backend/data.py`** is a leftover synthetic-data generator from an earlier version of this project. It isn't imported by `train.py` or `main.py` — actual training only ever goes through `backend/real_data.py` — but it's still sitting in the repo, which is worth cleaning up given the project's whole pitch is "no fabricated signal anywhere."
-
----
-
 ## Results Snapshot
 
 Every architecture here gets an identical evaluation on the same held-out test set — so the numbers are directly comparable:
@@ -109,7 +98,7 @@ Every race replays with a distinct real grid, real pit-stop laps, and real final
 
 ## Deep Learning Modules
 
-Five architectures, all trained on the identical real dataset and split, all independently evaluated. Checkpoints are written for most of them under `checkpoints/*.pt`, but only `cnn_gat.pt` is what the dashboard actually loads and serves (`backend/main.py` looks for a `cnn_gat_v2.pt` first and falls back to `cnn_gat.pt`, since the serving code has already been updated for the newer pipeline described in the note above) — the other architectures exist to make the comparison honest, not just to pad a table.
+Five architectures, all trained on the identical real dataset and split, all independently evaluated. Checkpoints are written for most of them under `checkpoints/*.pt`, but only `cnn_gat.pt` is what the dashboard actually loads and serves — the other architectures exist to make the comparison honest, not just to pad a table.
 
 ### Module 1 — CNN (temporal baseline)
 
@@ -341,16 +330,3 @@ curl http://localhost:8000/api/tracks
 | `POST` | `/api/step` | Advance the replay by one lap |
 | `POST` | `/api/run` | Auto-advance the replay to completion |
 | `GET` | `/` | Serves the dashboard frontend |
-
----
-
-## Future Scope
-
-| Item | Why |
-|---|---|
-| Reconcile `backend/` with this README | The code already supports 8 architectures / 3-seed reporting; re-run `train.py` and update the numbers above to match, or branch the newer work off separately |
-| Remove or clearly mark `backend/data.py` | Dead synthetic-data code sitting in a repo whose pitch is "no fabricated signal" is an easy thing for a reviewer to flag |
-| Position-regression reframing | Would allow a true row-for-row comparison against published rank-prediction papers |
-| Larger dataset (pre-2014 eras) | ~275 races is small for a 5-architecture comparison; more data would tighten the metric gaps |
-| Real sub-lap telemetry (if a licensed source becomes reachable) | Would let the CNN branch use an actual time series instead of a tiled static vector |
-| Per-module inference endpoints | Expose CNN/GAT/LSTM/CNN+LSTM individually via API, not just the served CNN+GAT |
